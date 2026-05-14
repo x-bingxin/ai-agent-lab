@@ -25,7 +25,7 @@ class ContextManager:
 
     async def manage_context(self, messages: list[Dict], max_tokens: int) -> list[Dict]:
         """如果消息历史超过token限制，先总结历史再返回"""
-        from token_utils import TokenUtils
+        from backend.token_utils import TokenUtils
         token_utils = TokenUtils()
 
         total_tokens = token_utils.count_messages(messages)

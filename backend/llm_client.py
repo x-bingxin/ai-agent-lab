@@ -2,6 +2,7 @@ import asyncio
 
 import httpx
 from pydantic import BaseModel
+from openai import OpenAI
 
 
 class LLMConfig(BaseModel):
@@ -11,6 +12,43 @@ class LLMConfig(BaseModel):
     timeout: int = 60
     max_retries: int = 3
 
+
+class OpenAILLMClient:
+    def __init__(self):
+        from dotenv import load_dotenv
+        load_dotenv()
+        import os
+
+        config = LLMConfig(
+            api_key=os.getenv("LLM_API_KEY"),
+            base_url=os.getenv("LLM_BASE_URL"),    
+            model = os.getenv("LLM_MODEL")
+        )
+
+        self.config = config
+        self.client = OpenAI(
+            api_key=config.api_key,
+            base_url=config.base_url
+        )
+
+class EmbeddingModelEntry:
+    def __init__(self):
+        from dotenv import load_dotenv
+        load_dotenv()
+        import os
+
+        config = LLMConfig(
+            api_key=os.getenv("EMBEDDING_MODEL_API_KEY"),
+            base_url=os.getenv("EMBEDDING_MODEL_BASE_URL"),    
+            model=os.getenv("EMBEDDING_MODEL_NAME")
+        )
+
+        self.config = config
+        self.client = OpenAI(
+            api_key=config.api_key,
+            base_url=config.base_url
+        )
+    
 
 class LLMClient:
     def __init__(self, config: LLMConfig):

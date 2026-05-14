@@ -13,3 +13,6 @@ wheels/
 # Frontend build files
 frontend/dist/
 frontend/node_modules/
+
+# chromadb data
+chroma_data/
