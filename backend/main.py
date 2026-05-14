@@ -3,6 +3,11 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from rag_pipeline import RAGPipeline
+from embeddings import EmbeddingService
+from llm_client import EmbeddingModelEntry
+from vector_store import DocumentStore
+
 from llm_client import LLMClient, LLMConfig
 import os
 from dotenv import load_dotenv
@@ -23,25 +28,52 @@ class ChatRequest(BaseModel):
     message: str
     session_id: str = "default_session"
 
+model_entry = EmbeddingModelEntry()
+embedding_service = EmbeddingService(model_entry.client, model_entry.config.model)
+doc_store = DocumentStore()
+ragPip = RAGPipeline(embedding_service, doc_store, llm_client)
+
 @app.post("/chat/stream")
 async def chat_stream(request: ChatRequest):
     """SSE 流式接口，调用 LLMClient 的 stream_chat 方法"""
     async def generate():
         try:
-            async for token in llm_client.stream_chat([
-                {"role": "user", "content": request.message}
-            ]):
-                # SSE 格式要求每条消息以 "data: " 开头，结尾以两个换行符结束
-                yield f"data: {token}\n\n"
+            if doc_store.is_empty():
+                async for token in llm_client.stream_chat([
+                    {"role": "user", "content": request.message}
+                ]):
+                    yield f"data: {token}\n\n"
+            else:
+                async for token in ragPip.stream_query(request.message):
+                    # SSE 格式要求每条消息以 "data: " 开头，结尾以两个换行符结束
+                    yield f"data: {token}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             yield f"data: [ERROR] {str(e)}\n\n"
 
     return StreamingResponse(
         generate(),
-        media_type="text/event-stream",
-        # headers={"allow-origin": "*", "Cache-Control": "no-cache", "Connection": "keep-alive"},
+        media_type="text/event-stream"
     )
+
+
+class KnowledgeRequest(BaseModel):
+    content: str
+    # session_id: str = "default_session"
+
+@app.post("/knowledge/process")
+async def knowledge_process(request: KnowledgeRequest):
+    """调用 vector store 将知识写入"""
+
+    content = request.content
+    if content is not None:
+        await ragPip.ingest(request.content)
+        await embedding_service.embed(request.content)
+    else:
+        doc_store.cleanup()
+
+    return {"data": "SUCCESS"}
+    
 
 # @app.post("/chat")
 # async def chat(request: ChatRequest):

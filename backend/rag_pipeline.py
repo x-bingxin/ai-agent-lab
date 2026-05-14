@@ -26,7 +26,7 @@ class RAGPipeline:
         print(f"摄入完成： {len(chunks)} 个文档块")
         return ids
     
-    async def query(self, question: str, top_k: int = 3) -> dict:
+    async def stream_query(self, question: str, top_k: int = 3):
         """检索 + 生成回答"""
         # 1. 向量检索
         query_embedding = await self.embed.embed_single(question)
@@ -55,6 +55,7 @@ class RAGPipeline:
             2. 不要忽略上下文
             3. 尽量引用原文
             4. 只有在上下文完全没有相关信息时，才回答：“依据现有资料无法回答您的问题”
+            5. 不要在回复内容中提 “上下文” 这一概念，用 “知识库” 代替
 
             上下文：
             {context}
@@ -67,22 +68,13 @@ class RAGPipeline:
 
         print(f"问题Prompt：{prompt}")
 
-        response = await self.llm.chat([
+        async for token in self.llm.stream_chat([
             {"role": "system", "content": "你是一个严谨的知识库助手。只基于提供的上下文回答，不要编造信息。"},
             {"role": "user", "content": prompt}
-        ])
+        ]):
+            yield token
 
-        answer = response['choices'][0]['message']['content']
         
-        return {
-            'question': question,
-            'answer': answer,
-            'sources': search_results['metadatas'],
-            'context_docs': search_results['documents'],
-        }
-
-
-
 
 
 
@@ -127,11 +119,12 @@ async def main():
 
     await ragPip.ingest(doc, 'https://mp.weixin.qq.com/s/3qKvWajntkYLArH4ZShAhg')
 
-    answer_1 = await ragPip.query('金鱼最喜欢吃什么')
-    print(f"问题一的答案：{answer_1}")
-    answer_2 = await ragPip.query('菩提祖师为什么要将孙悟空赶走')
-    print(f"问题二的答案：{answer_2}")    
+    # answer_1 = await ragPip.query('金鱼最喜欢吃什么')
+    # print(f"问题一的答案：{answer_1}")
+    # answer_2 = await ragPip.query('菩提祖师为什么要将孙悟空赶走')
+    # print(f"问题二的答案：{answer_2}")    
 
+    await ragPip.stream_query('菩提祖师为什么要将孙悟空赶走')
 
 if __name__ == "__main__":
     import asyncio

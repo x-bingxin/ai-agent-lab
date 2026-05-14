@@ -39,6 +39,13 @@ class DocumentStore:
         )
         return ids
 
+    def is_empty(self) -> bool:
+        """检查文档库是否为空"""
+        return self.collection.count() == 0
+    
+    def cleanup(self):
+        self.client.delete_collection(self.collection_name)
+
     def search(self, query_embedding: list[float], top_k: int = 1) -> dict:
         """检索相似的文章"""
         results = self.collection.query(

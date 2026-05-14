@@ -3,7 +3,5 @@ import ChatBox from '../components/ChatBox.vue'
 </script>
 
 <template>
-  <main>
-    <ChatBox />
-  </main>
+  <ChatBox />
 </template>
