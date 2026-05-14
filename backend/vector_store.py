@@ -28,7 +28,7 @@ class DocumentStore:
             metadata={"hnsw:space": "cosine"} # 用余弦距离
         )
 
-    def add_document(self, texts: list[str], embeddings: list[list[float]], metadatas: Optional[list[dict]] = None):
+    def add_documents(self, texts: list[str], embeddings: list[list[float]], metadatas: Optional[list[dict]] = None):
         """批量添加文档"""
         ids = [str(uuid.uuid4()) for _ in texts]
         self.collection.add(
@@ -66,7 +66,7 @@ async def main():
 
     embeddings = await embedding_service.embed(documents)
 
-    store.add_document(documents, embeddings)
+    store.add_documents(documents, embeddings)
     results = store.search(embeddings[2])
     print(results)
 

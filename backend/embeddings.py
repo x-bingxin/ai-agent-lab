@@ -10,14 +10,19 @@ class EmbeddingService:
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         """将文本列表转为向量列表"""
+        batch_size = 10
+        all_embeddings = []
 
-        # 注意： embed 方法接受字符串或字符串列表
-        response = self.client.embeddings.create(
-            model = self.model,
-            input = texts
-        )
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i+batch_size]
+            # 注意： embed 方法接受字符串或字符串列表
+            response = self.client.embeddings.create(
+                model = self.model,
+                input = batch
+            )
+            all_embeddings.extend([d.embedding for d in response.data])
 
-        return [d.embedding for d in response.data]
+        return all_embeddings
     
     async def embed_single(self, text: str) -> list[float]:
         results = await self.embed([text])

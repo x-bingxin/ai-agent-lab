@@ -13,7 +13,7 @@ class LLMConfig(BaseModel):
     max_retries: int = 3
 
 
-class OpenAILLMClient:
+class OpenAILLMEntry:
     def __init__(self):
         from dotenv import load_dotenv
         load_dotenv()
@@ -102,6 +102,23 @@ class LLMClient:
 
     async def close(self):
         await self._client.aclose()
+
+
+def get_llm_client():
+    from llm_client import LLMClient, LLMConfig
+    from dotenv import load_dotenv
+    import os
+
+    load_dotenv()
+
+    llm_client = LLMClient(LLMConfig(
+        api_key=os.getenv("LLM_API_KEY"),
+        base_url=os.getenv("LLM_BASE_URL"),
+        model=os.getenv("LLM_MODEL"),
+    ))
+    return llm_client
+
+
 
 
 async def main():
