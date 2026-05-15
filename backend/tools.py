@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Literal
-from llm_client import LLMClient, LLMConfig
+from llm_client import LLMClient, get_llm_client
 import json
 import asyncio
 
@@ -179,21 +179,10 @@ async def react_loop(user_input: str, llm_client: LLMClient, max_iterations: int
     return "抱歉，我无法在限定步骤内完成这个任务。"
 
 
-
 async def main():
-    from dotenv import load_dotenv
-    load_dotenv()
-    import os
-
-    config = LLMConfig(
-        api_key=os.getenv("LLM_API_KEY"),
-        base_url=os.getenv("LLM_BASE_URL"),    
-        model = os.getenv("LLM_MODEL")
-    )
+    llm_client = get_llm_client()
     user_input = "北京今天天气怎么样？华氏温度转成摄氏度是多少？"
-    client = LLMClient(config)
-
-    await react_loop(user_input, client, 5)
+    await react_loop(user_input, llm_client, 5)
 
 
 if __name__ == "__main__":

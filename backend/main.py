@@ -7,6 +7,8 @@ from rag_pipeline import RAGPipeline
 from embeddings import EmbeddingService
 from llm_client import EmbeddingModelEntry
 from vector_store import DocumentStore
+from tools import TOOL_DEFINITIONS, TOOL_HANDLERS
+
 
 from llm_client import LLMClient, LLMConfig
 import os
@@ -39,9 +41,9 @@ async def chat_stream(request: ChatRequest):
     async def generate():
         try:
             if doc_store.is_empty():
-                async for token in llm_client.stream_chat([
+                async for token in llm_client.stream_chat_with_tools([
                     {"role": "user", "content": request.message}
-                ]):
+                ], TOOL_DEFINITIONS, TOOL_HANDLERS):
                     yield f"data: {token}\n\n"
             else:
                 async for token in ragPip.stream_query(request.message):
@@ -112,4 +114,4 @@ async def knowledge_process(request: KnowledgeRequest):
 #     )
 
 # 启动: uv run uvicorn main:app --reload
-# 查看端口占用情况： lsof -i 8000
+# 查看端口占用情况： lsof -i :8000

@@ -22,8 +22,11 @@ class TokenManager:
 
     def count(self, text: str) -> int:
         """计算文本的token数量"""
-        encodedStr = self.encoder.encode(text)
-        return len(encodedStr)
+        if text is None:
+            return 0
+        else: 
+            encodedStr = self.encoder.encode(text)
+            return len(encodedStr)
     
     def count_messages(self, messages: List[Dict[str, str]]) -> int:
         """估算多轮对话的token消耗"""
@@ -77,7 +80,9 @@ async def main():
         text = sys.argv[1] if len(sys.argv) > 1 else open(sys.argv[1]).read()
         print(f"sys.argv[1]: {text}")
         print (f"Token count for sys.argv[1] {tm.count(text)}")
+    
     print("Total tokens:", tm.count_messages(msgs))
+    
     fitted = tm.fit_to_window(msgs, max_tokens=20, reserve_for_output=5)
     print("Fitted messages:", fitted)
 
